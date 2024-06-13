@@ -19,4 +19,4 @@ class ArxivScraper:
         query = self.link.split("/")[-1]
         retriever = ArxivRetriever(load_max_docs=2, doc_content_chars_max=None)
         docs = retriever.get_relevant_documents(query=query)
-        return docs[0].page_content
+        return docs[0].page_content, docs[0].metadata.get('Published') 

@@ -42,17 +42,28 @@ class Scraper:
         """
         Extracts the data from the link
         """
+
         content = ""
+        time=None
+        is_arxiv = False
         try:
             Scraper = self.get_scraper(link)
+            if Scraper == ArxivScraper:
+                is_arxiv = True
             scraper = Scraper(link, session)
-            content = scraper.scrape()
+            if is_arxiv:
+                content,time = scraper.scrape()
+            else:
+                content = scraper.scrape()
 
-            if len(content) < 100:
-                return {"url": link, "raw_content": None}
-            return {"url": link, "raw_content": content}
+            if len(content) < 100 and scraper!=ArxivScraper :
+                return {"url": link, "raw_content": None, 'time': None}
+            if time:
+                return {"url": link, "raw_content": content, 'time': time}
+            else:
+                return {"url": link, "raw_content": content, 'time': None}
         except Exception as e:
-            return {"url": link, "raw_content": None}
+            return {"url": link, "raw_content": None , 'time': None}
 
     def get_scraper(self, link):
         """
@@ -87,6 +98,7 @@ class Scraper:
             scraper_key = "arxiv"
         else:
             scraper_key = self.scraper
+        print(scraper_key)
 
         scraper_class = SCRAPER_CLASSES.get(scraper_key)
         if scraper_class is None:

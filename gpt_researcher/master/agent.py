@@ -27,8 +27,9 @@ class GPTResearcher:
         parent_query: str = "",
         subtopics: list = [],
         visited_urls: set = set(),
-        verbose: bool = True,
-        context=[]
+        verbose: bool = True,    
+        context=[],
+        only_arxiv=None
     ):
         """
         Initialize the GPT Researcher class.
@@ -59,6 +60,7 @@ class GPTResearcher:
         self.visited_urls: set[str] = visited_urls
         self.verbose: bool = verbose
         self.websocket = websocket
+        self.if_arxiv=only_arxiv
 
         # Only relevant for DETAILED REPORTS
         # --------------------------------------
@@ -101,6 +103,7 @@ class GPTResearcher:
         time.sleep(2)
         if self.verbose:
             await stream_output("logs", f"Finalized research step.\n💸 Total Research Costs: ${self.get_costs()}", self.websocket)
+        print(context)
 
         return self.context
 
@@ -189,6 +192,8 @@ class GPTResearcher:
 
         # Using asyncio.gather to process the sub_queries asynchronously
         context = await asyncio.gather(*[self.__process_sub_query(sub_query, scraped_data) for sub_query in sub_queries])
+        if not context:
+            print("No context found for the given query.")
         return context
 
     async def __process_sub_query(self, sub_query: str, scraped_data: list = []):
@@ -206,6 +211,8 @@ class GPTResearcher:
 
         if not scraped_data:
             scraped_data = await self.__scrape_data_by_query(sub_query)
+            if not scraped_data and self.verbose:
+                await stream_output("logs", f"有！{scraped_data}", self.websocket)
 
         content = await self.__get_similar_content_by_query(sub_query, scraped_data)
 
@@ -220,14 +227,26 @@ class GPTResearcher:
         Args: url_set_input (set[str]): The url set to get the new urls from
         Returns: list[str]: The new urls from the given url set
         """
-
         new_urls = []
+
         for url in url_set_input:
             if url not in self.visited_urls:
                 self.visited_urls.add(url)
-                new_urls.append(url)
+                if self.if_arxiv:
+                    if "arxiv.org" in url:
+                        new_urls.append(url)
+                        if self.verbose:
+                            await stream_output("logs", f"✅ Added arxiv url to research: {url}\n", self.websocket)
+                    else:
+                        if self.verbose:
+                            await stream_output("logs", f"❌ Skipped non-arxiv url: {url}\n", self.websocket)
+                else:
+                    new_urls.append(url)
+                    if self.verbose:
+                        await stream_output("logs", f"✅ Added source url to research: {url}\n", self.websocket)
+            else:
                 if self.verbose:
-                    await stream_output("logs", f"✅ Added source url to research: {url}\n", self.websocket)
+                    await stream_output("logs", f"❌ URL already visited: {url}\n", self.websocket)
 
         return new_urls
 
@@ -245,6 +264,7 @@ class GPTResearcher:
         search_results = retriever.search(
             max_results=self.cfg.max_search_results_per_query)
         new_search_urls = await self.__get_new_urls([url.get("href") for url in search_results])
+
 
         # Scrape Urls
         if self.verbose:

@@ -82,6 +82,8 @@ async def create_chat_completion(
     if max_tokens is not None and max_tokens > 8001:
         raise ValueError(
             f"Max tokens cannot be more than 8001, but got {max_tokens}")
+    if max_tokens is None:
+        max_tokens = 4000
 
     # Get the provider from supported providers
     ProviderClass = get_provider(llm_provider)

@@ -133,6 +133,13 @@ def scrape_urls(urls, cfg=None):
 
 # Deprecated: Instead of summaries using ContextualRetriever embedding.
 # This exists in case we decide to modify in the future
+
+#async def getdate(query, cfg, agent_role_prompt, cost_callback: callable = None):
+
+#    return date
+
+
+
 async def summarize(query, content, agent_role_prompt, cfg, websocket=None, cost_callback: callable = None):
     """
     Asynchronously summarizes a list of URLs.
@@ -244,6 +251,7 @@ async def generate_report(
     """
     generate_prompt = get_prompt_by_report_type(report_type)
     report = ""
+
 
     if report_type == "subtopic_report":
         content = f"{generate_prompt(query, existing_headers, main_topic, context, cfg.report_format, cfg.total_words)}"

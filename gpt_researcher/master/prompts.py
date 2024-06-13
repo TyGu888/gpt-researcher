@@ -20,7 +20,7 @@ def generate_search_queries_prompt(question: str, parent_query: str, report_type
 
     return f'Write {max_iterations} google search queries to search online that form an objective opinion from the following task: "{task}"' \
            f'Use the current date if needed: {datetime.now().strftime("%B %d, %Y")}.\n' \
-           f'Also include in the queries specified task details such as locations, names, etc.\n' \
+           f'Also include in the queries specified task details such as locations, names, time limit etc.\n' \
            f'You must respond with a list of strings in the following format: ["query 1", "query 2", "query 3"].\n' \
            f'The response should contain ONLY the list.'
 
@@ -48,14 +48,18 @@ def generate_report_prompt(question: str, context, report_source: str, report_fo
         reference_prompt = f"""
             You MUST write all used source document names at the end of the report as references, and make sure to not add duplicated sources, but only one reference for each."
         """
+
         
 
     return f'Information: """{context}"""\n\n' \
            f'Using the above information, answer the following' \
            f' query or task: "{question}" in a detailed report --' \
            " The report should focus on the answer to the query, should be well structured, informative," \
-           f" in depth and comprehensive, with facts and numbers if available and a minimum of {total_words} words.\n" \
-           "You should strive to write the report as long as you can using all relevant and necessary information provided.\n" \
+           f" in depth and comprehensive, with facts and numbers if available ," \
+           f"Note that the current date is {datetime.now().strftime('%B %d, %Y')}. \n"\
+            "IMPORTANT: Note the publication date of the information provided, if no provided infromation meets the date condition,"\
+            "please feel free to indicate that in the report and stop writing more."\
+            "Also, if there exist information that meet date limit, You should strive to write the report as long as you can using all relevant and necessary information provided.\n" \
            "You must write the report with markdown syntax.\n " \
            f"Use an unbiased and journalistic tone. \n" \
            "You MUST determine your own concrete and valid opinion based on the given information. Do NOT deter to general and meaningless conclusions.\n" \
@@ -64,8 +68,7 @@ def generate_report_prompt(question: str, context, report_source: str, report_fo
             f"Cite search results using inline notations. Only cite the most \
             relevant results that answer the query accurately. Place these citations at the end \
             of the sentence or paragraph that reference them.\n"\
-            f"Please do your best, this is very important to my career. " \
-            f"Assume that the current date is {datetime.now().strftime('%B %d, %Y')}"
+            f"Please do your best, this is very important to my career. "
 
 
 def generate_resource_report_prompt(question, context, report_source: str, report_format="apa", total_words=1000):
